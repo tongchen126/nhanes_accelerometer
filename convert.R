@@ -66,7 +66,8 @@ tryCatch({
 
       # ENMO calculation (UKBB standard)
       do.enmo = TRUE,              # Calculate ENMO metric
-      do.anglez = TRUE,            # Calculate angle-z (useful for orientation)
+      do.anglez = FALSE,           # Calculate angle-z (useful for orientation)
+      epochvalues2csv = TRUE,
 
       # Additional useful parameters
       printsummary = TRUE,         # Print summary to console
