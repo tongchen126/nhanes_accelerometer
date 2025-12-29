@@ -71,6 +71,38 @@ unzip_and_combine(){
        done
 }
 
+process_single(){
+       local output_dir=$2
+       local bz2_file=$3
+       local ID=$(basename "$bz2_file" |awk -F '.' '{print $1}')
+       local curDIR=$1/$ID
+
+       rm -rf ${curDIR}
+       mkdir -p ${curDIR}/tmp
+       tar -xvf "${bz2_file}" -C "${curDIR}/tmp" 2>/dev/null
+       exclude_files=$(ls -d ${curDIR}/tmp/* | grep -v "GT3.*sensor.*csv")
+       echo "Excluded files: $exclude_files"
+       for exclude_file in $exclude_files; do
+              rm $exclude_file
+       done
+       ls -d ${curDIR}/tmp/*.csv | xargs awk 'FNR==1 && NR!=1{next;}{print}' > "${curDIR}/${ID}.csv"
+       rm -rf ${curDIR}/tmp
+       Rscript convert.R ${curDIR} ${output_dir} > ${output_dir}/${ID}.log 2>&1
+}
+test_func(){
+       echo "$@"
+}
+
+process_all(){
+       local bz2_dir=$1
+       local tmp_dir=$2
+       local output_dir=$3
+       local num_cpus=$(nproc)
+
+       export -f test_func
+       parallel -j $num_cpus test_func "${tmp_dir}" "${output_dir}" ::: $(ls -d ${bz2_dir}/* | grep 'bz2$')
+}
+
 case $1 in
        download)
               download "$2" "$3"
@@ -78,9 +110,13 @@ case $1 in
        unzip_combine)
               unzip_and_combine "$2" "$3"
        ;;
+       process_all)
+              process_all "$2" "$3" "$4"
+       ;;
        *)
               echo "Usage ${0} download <URL> <DIR>"
-              echo "Usage ${0} unzip_combine <PATH_TO_NHANES_DATA> <PATH_TO_SAVE_CSV>"
+              echo "Usage ${0} unzip_combine <PATH_TO_NHANES_DATA> <PATH_TO_SAVE_CSV> (depracted, use only when unzip and combine is the final aim.)"
+              echo "Usage ${0} process_all <PATH_TO_NHANES_BZ2_DIR> <PATH_USED_AS_TMP> <PATH_TO_SAVE>. PATH_USED_AS_TMP is better on a fast SSD."
               exit 1
        ;;
 esac
