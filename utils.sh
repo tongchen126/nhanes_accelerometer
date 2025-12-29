@@ -76,19 +76,24 @@ process_single(){
        local bz2_file=$3
        local ID=$(basename "$bz2_file" |awk -F '.' '{print $1}')
        local curDIR=$1/$ID
+       local log_file=${output_dir}/LOG/${ID}.log
 
+       echo "Processing ID: ${ID}" > ${log_file} 2>&1
        rm -rf ${curDIR}
        mkdir -p ${curDIR}/tmp
-       tar -xvf "${bz2_file}" -C "${curDIR}/tmp" 2>/dev/null
+       tar -xvf "${bz2_file}" -C "${curDIR}/tmp" 1>/dev/null
        exclude_files=$(ls -d ${curDIR}/tmp/* | grep -v "GT3.*sensor.*csv")
-       echo "Excluded files: $exclude_files"
+       echo "Excluded files: $exclude_files" >> ${log_file} 2>&1
        for exclude_file in $exclude_files; do
               rm $exclude_file
        done
        ls -d ${curDIR}/tmp/*.csv | xargs awk 'FNR==1 && NR!=1{next;}{print}' > "${curDIR}/${ID}.csv"
        rm -rf ${curDIR}/tmp
-       Rscript convert.R ${curDIR} ${output_dir} > ${output_dir}/${ID}.log 2>&1
+       echo "Converting ID: ${ID}" >> ${log_file} 2>&1
+       Rscript convert.R ${curDIR} ${output_dir} >> ${log_file} 2>&1
+       echo "Finishing ID: ${ID}, exit value $?" >> ${log_file} 2>&1
 }
+
 test_func(){
        echo "$@"
 }
@@ -99,8 +104,12 @@ process_all(){
        local output_dir=$3
        local num_cpus=$(nproc)
 
-       export -f test_func
-       parallel -j $num_cpus test_func "${tmp_dir}" "${output_dir}" ::: $(ls -d ${bz2_dir}/* | grep 'bz2$')
+       rm -rf $output_dir
+       mkdir -p $output_dir/LOG
+       export -f process_single
+       echo "Do parallel processing, number of process ${num_cpus}"
+       echo "Processing bz2_dir $bz2_dir, tmp dir $tmp_dir, output dir $output_dir"
+       parallel --progress --lb -j $num_cpus process_single "${tmp_dir}" "${output_dir}" ::: $(ls -d ${bz2_dir}/* | grep 'bz2$')
 }
 
 case $1 in
@@ -120,4 +129,3 @@ case $1 in
               exit 1
        ;;
 esac
-
