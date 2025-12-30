@@ -2,7 +2,7 @@
 TIMEOUT=60
 MAX_ROUNDS=5
 
-eval "$(conda shell.bash hook)" && conda activate nhanes
+# eval "$(conda shell.bash hook)" && conda activate nhanes
 
 get_links(){
        lynx -dump -listonly -nonumbers "$1" |grep "tar\.bz2" > "$2"
@@ -104,7 +104,7 @@ process_single(){
               local csv=${rscript_output_dir}/output_${ID}/meta/csv/${ID}.csv.RData.csv
               local output="${output_dir}/${ID}_"
               echo "Python processing, ID: ${ID}, " >> ${log_file} 2>&1
-              python utils.py $meta $ms2 $csv $output >> ${log_file} 2>&1
+              python3 utils.py $meta $ms2 $csv $output >> ${log_file} 2>&1
               if [ $? -eq 0 ]; then
                      echo "Python finished successfully, ID: ${ID}" >> ${log_file} 2>&1
                      success=1
