@@ -2,6 +2,8 @@
 TIMEOUT=60
 MAX_ROUNDS=5
 
+eval "$(conda shell.bash hook)" && conda activate nhanes
+
 get_links(){
        lynx -dump -listonly -nonumbers "$1" |grep "tar\.bz2" > "$2"
 }
