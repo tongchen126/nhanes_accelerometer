@@ -99,7 +99,8 @@ process_single(){
               local ms2=${rscript_output_dir}/output_${ID}/meta/ms2.out/${ID}.csv.RData
               local csv=${rscript_output_dir}/output_${ID}/meta/csv/${ID}.csv.RData.csv
               local output="${output_dir}/${ID}_"
-              python utils.py $meta $ms2 $csv $output
+              echo "Python processing, ID: ${ID}, " >> ${log_file} 2>&1
+              python utils.py $meta $ms2 $csv $output >> ${log_file} 2>&1
        else
               echo "Rscript error, ID: ${ID}, " >> ${log_file} 2>&1
        fi

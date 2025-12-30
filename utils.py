@@ -19,7 +19,7 @@ def get_merged_df(df1, df2):
        )
        return df1_merged.copy(deep=True)
 
-def process_csv_file(meta_path, ms2_path, csv_path, output_dir):
+def process_csv_file(meta_path, ms2_path, csv_path, output_prefix):
        meta = read_rda(meta_path)
        ms2 = read_rda(ms2_path)
        short_imputed = pd.read_csv(csv_path)
@@ -43,11 +43,12 @@ def process_csv_file(meta_path, ms2_path, csv_path, output_dir):
        short_final = pd.DataFrame({header[0]: short['ENMO'] * 1000,
                                    header[1]: short['imputed']})
        
-       short_imputed_final.to_csv(os.path.join(output_dir, "imputed.csv"), index=False, encoding='utf-8')
-       short_final.to_csv(os.path.join(output_dir, "orig.csv"), index=False, encoding='utf-8')
+       short_imputed_final.to_csv(output_prefix + "imputed.csv", index=False, encoding='utf-8')
+       short_final.to_csv(output_prefix + "orig.csv", index=False, encoding='utf-8')
        
 if __name__ == "__main__":
        #process_csv_file("/root/workspace/PycharmProjects/nhanes_process/tmp4/output_tmp/meta/basic/meta_62180.csv.RData",
        #          "/root/workspace/PycharmProjects/nhanes_process/tmp4/output_tmp/meta/ms2.out/62180.csv.RData",
        #          "/root/workspace/PycharmProjects/nhanes_process/tmp4/output_tmp/meta/csv/62180.csv.RData.csv", "tmp")
+       print(f"{sys.argv}")
        process_csv_file(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
