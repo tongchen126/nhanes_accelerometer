@@ -104,6 +104,8 @@ process_single(){
        else
               echo "Rscript error, ID: ${ID}, " >> ${log_file} 2>&1
        fi
+       rm -rf ${curDIR}
+       rm -rf ${rscript_output_dir}/output_${ID}
 }
 
 test_func(){
