@@ -76,9 +76,11 @@ process_single(){
        local bz2_file=$3
        local ID=$(basename "$bz2_file" |awk -F '.' '{print $1}')
        local curDIR=$1/$ID
-       local log_file=${output_dir}/LOG/${ID}.log
+       local rscript_output_dir=${1}/
+       local log_file=${1}/LOG/${ID}.log
 
        echo "Processing ID: ${ID}" > ${log_file} 2>&1
+       mkdir -p ${1}/LOG/
        rm -rf ${curDIR}
        mkdir -p ${curDIR}/tmp
        tar -xvf "${bz2_file}" -C "${curDIR}/tmp" 1>/dev/null
@@ -90,8 +92,17 @@ process_single(){
        ls -d ${curDIR}/tmp/*.csv | xargs awk 'FNR==1 && NR!=1{next;}{print}' > "${curDIR}/${ID}.csv"
        rm -rf ${curDIR}/tmp
        echo "Converting ID: ${ID}" >> ${log_file} 2>&1
-       Rscript convert.R ${curDIR} ${output_dir} >> ${log_file} 2>&1
-       echo "Finishing ID: ${ID}, exit value $?" >> ${log_file} 2>&1
+       Rscript convert.R ${curDIR} ${rscript_output_dir} >> ${log_file} 2>&1
+       if [ $? -eq 0 ]; then
+              echo "Rscript finished successfully, ID: ${ID}, " >> ${log_file} 2>&1
+              local meta=${rscript_output_dir}/output_${ID}/meta/basic/meta_${ID}.csv.RData
+              local ms2=${rscript_output_dir}/output_${ID}/meta/ms2.out/${ID}.csv.RData
+              local csv=${rscript_output_dir}/output_${ID}/meta/csv/${ID}.csv.RData.csv
+              local output="${output_dir}/${ID}_"
+              python utils.py $meta $ms2 $csv $output
+       else
+              echo "Rscript error, ID: ${ID}, " >> ${log_file} 2>&1
+       fi
 }
 
 test_func(){
@@ -103,9 +114,11 @@ process_all(){
        local tmp_dir=$2
        local output_dir=$3
        local num_cpus=$(nproc)
-
+       
+       rm -rf $tmp_dir
        rm -rf $output_dir
-       mkdir -p $output_dir/LOG
+       mkdir -p ${tmp_dir}/LOG
+       mkdir -p $output_dir
        export -f process_single
        echo "Do parallel processing, number of process ${num_cpus}"
        echo "Processing bz2_dir $bz2_dir, tmp dir $tmp_dir, output dir $output_dir"
