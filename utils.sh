@@ -78,6 +78,8 @@ process_single(){
        local curDIR=$1/$ID
        local rscript_output_dir=${1}/
        local log_file=${1}/LOG/${ID}.log
+       local success=0
+       local FAILLOG=${output_dir}/FAILED.txt
 
        echo "Processing ID: ${ID}" > ${log_file} 2>&1
        mkdir -p ${1}/LOG/
@@ -101,8 +103,20 @@ process_single(){
               local output="${output_dir}/${ID}_"
               echo "Python processing, ID: ${ID}, " >> ${log_file} 2>&1
               python utils.py $meta $ms2 $csv $output >> ${log_file} 2>&1
+              if [ $? -eq 0 ]; then
+                     echo "Python finished successfully, ID: ${ID}" >> ${log_file} 2>&1
+                     success=1
+              else
+                     echo "Python error, ID: ${ID}" >> ${log_file} 2>&1
+              fi
        else
               echo "Rscript error, ID: ${ID}, " >> ${log_file} 2>&1
+       fi
+       if [ $success -eq 0 ]; then
+              {
+                     flock -x 200  # Acquire exclusive lock
+                     echo ${ID} >> "$FAILLOG"
+              } 200>"$FAILLOG"
        fi
        rm -rf ${curDIR}
        rm -rf ${rscript_output_dir}/output_${ID}
@@ -118,8 +132,8 @@ process_all(){
        local output_dir=$3
        local num_cpus=$(nproc)
        
-       rm -rf $tmp_dir
-       rm -rf $output_dir
+       rm -rf ${tmp_dir}/*
+       rm -rf ${output_dir}/*
        mkdir -p ${tmp_dir}/LOG
        mkdir -p $output_dir
        export -f process_single
