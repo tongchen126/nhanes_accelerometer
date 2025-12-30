@@ -113,10 +113,10 @@ process_single(){
               echo "Rscript error, ID: ${ID}, " >> ${log_file} 2>&1
        fi
        if [ $success -eq 0 ]; then
-              {
+              (
                      flock -x 200  # Acquire exclusive lock
                      echo ${ID} >> "$FAILLOG"
-              } 200>"$FAILLOG"
+              ) 200>"${FAILLOG}.lock"
        fi
        rm -rf ${curDIR}
        rm -rf ${rscript_output_dir}/output_${ID}
