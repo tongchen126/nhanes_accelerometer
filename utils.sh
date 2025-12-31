@@ -96,6 +96,7 @@ process_single(){
        ls -d ${curDIR}/tmp/*.csv | xargs awk 'FNR==1 && NR!=1{next;}{print}' > "${curDIR}/${ID}.csv"
        rm -rf ${curDIR}/tmp
        echo "Converting ID: ${ID}" >> ${log_file} 2>&1
+       wc -l ${curDIR}/*  >> ${log_file} 2>&1
        Rscript convert.R ${curDIR} ${rscript_output_dir} >> ${log_file} 2>&1
        if [ $? -eq 0 ]; then
               echo "Rscript finished successfully, ID: ${ID}, " >> ${log_file} 2>&1
@@ -132,7 +133,7 @@ process_all(){
        local bz2_dir=$1
        local tmp_dir=$2
        local output_dir=$3
-       local num_cpus=$(nproc)
+       local num_cpus=24 # $(nproc)
        
        rm -rf ${tmp_dir}/*
        rm -rf ${output_dir}/*
