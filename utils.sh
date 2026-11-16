@@ -133,7 +133,7 @@ process_all(){
        local bz2_dir=$1
        local tmp_dir=$2
        local output_dir=$3
-       local num_cpus=$(nproc)
+       local num_cpus=24 # $(nproc)
        
        # rm -rf ${output_dir}/*
        if [ -d "$output_dir" ]; then
